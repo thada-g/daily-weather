@@ -1,24 +1,49 @@
 name: Daily Weather
-
+ 
 on:
-  schedule:
-    - cron: '30 7 * * *'
-  workflow_dispatch:
-
+schedule:
+- cron: '30 7 * * *'
+workflow_dispatch:
+ 
 jobs:
-  send-weather:
-    runs-on: ubuntu-latest
+send-weather:
+runs-on: ubuntu-latest
+ 
+steps:
+- name: Get weather
+run: |
+DATA=$(curl -s "https://wttr.in/Reading?format=j1")
+ 
+TEMP=$(echo "$DATA" | grep -o '"temp_C":"[^"]*"' | head -1 | cut -d'"' -f4)
+ 
+MAXRAIN=$(echo "$DATA" | grep -o '"chanceofrain":"[0-9]*"' | cut -d'"' -f4 | sort -nr | head -1)
+ 
+if [ "$MAXRAIN" -ge 70 ]; then
+MESSAGE="☔ It is likely to rain in Tilehurst today. Maximum rain chance: ${MAXRAIN}%. Current temperature: ${TEMP}°C."
+elif [ "$MAXRAIN" -ge 30 ]; then
+MESSAGE="🌦 It might rain in Tilehurst today. Maximum rain chance: ${MAXRAIN}%. Current temperature: ${TEMP}°C."
+else
+MESSAGE="☀️ It is unlikely to rain in Tilehurst today. Maximum rain chance: ${MAXRAIN}%. Current temperature: ${TEMP}°C."
+fi
+ 
+echo "MESSAGE=$MESSAGE" >> $GITHUB_ENV
+ 
+- name: Send Telegram message
+run: |
+curl -X POST \
+"https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+-d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+-d text="$MESSAGE"
 
-    steps:
-      - name: Get weather
-        run: |
-          WEATHER=$(curl -s "https://wttr.in/Tilehurst?format=3&m")
-          echo "WEATHER=$WEATHER" >> $GITHUB_ENV
+After you paste that:
 
-      - name: Send Telegram message
-        run: |
-          curl -X POST \
-            "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-            -d text="🌦 Good morning Thada! $WEATHER"
-            
+Commit changes
+Go to Actions
+Run workflow
+
+You should then get something like:
+
+Plain Text
+☀️ It is unlikely to rain in Tilehurst today.
+Maximum rain chance: 15%.
+Current temperature: 7°C.
