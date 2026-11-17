@@ -10,20 +10,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Get weather
+      - name: Get rain forecast
         run: |
-          DATA=$(curl -s "https://wttr.in/Reading?format=j1")
+          FORECAST=$(curl -s "https://wttr.in/Reading?format=j1")
 
-          TEMP=$(echo "$DATA" | grep -o '"temp_C":"[^"]*"' | head -1 | cut -d'"' -f4)
-
-          MAXRAIN=$(echo "$DATA" | grep -o '"chanceofrain":"[0-9]*"' | cut -d'"' -f4 | sort -nr | head -1)
-
-          if [ "$MAXRAIN" -ge 70 ]; then
-            MESSAGE="☔ It is likely to rain in Tilehurst today. Maximum rain chance: ${MAXRAIN}%. Current temperature: ${TEMP}°C."
-          elif [ "$MAXRAIN" -ge 30 ]; then
-            MESSAGE="🌦 It might rain in Tilehurst today. Maximum rain chance: ${MAXRAIN}%. Current temperature: ${TEMP}°C."
+          if echo "$FORECAST" | grep -q '"chanceofrain":"100"'; then
+            MESSAGE="☔ It is very likely to rain in Tilehurst today."
+          elif echo "$FORECAST" | grep -q '"chanceofrain":"[5-9][0-9]"'; then
+            MESSAGE="🌦 Rain is possible in Tilehurst today."
           else
-            MESSAGE="☀️ It is unlikely to rain in Tilehurst today. Maximum rain chance: ${MAXRAIN}%. Current temperature: ${TEMP}°C."
+            MESSAGE="☀️ It is unlikely to rain in Tilehurst today."
           fi
 
           echo "MESSAGE=$MESSAGE" >> $GITHUB_ENV
