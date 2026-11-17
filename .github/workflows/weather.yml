@@ -1,0 +1,24 @@
+name: Daily Weather
+
+on:
+  schedule:
+    - cron: '14 7 * * *'
+  workflow_dispatch:
+
+jobs:
+  send-weather:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get weather
+        id: weather
+        run: |
+          WEATHER=$(curl -s "https://wttr.in/Reading?format=3")
+          echo "WEATHER=$WEATHER" >> $GITHUB_ENV
+
+      - name: Send Telegram message
+        run: |
+          curl -X POST \
+            "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d text="🌤 Good morning Thada! $WEATHER"
