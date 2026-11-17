@@ -13,13 +13,19 @@ jobs:
       - name: Get rain forecast
         run: |
           FORECAST=$(curl -s "https://wttr.in/Reading?format=j1")
-
+          MAXTEMP=$(echo "$FORECAST" | grep -o '"maxtempC":"[0-9]*"' | head -1 | cut -d'"' -f4)
+          MINTEMP=$(echo "$FORECAST" | grep -o '"mintempC":"[0-9]*"' | head -1 | cut -d'"' -f4)
           if echo "$FORECAST" | grep -q '"chanceofrain":"100"'; then
-            MESSAGE="☔ It is very likely to rain in Tilehurst today."
-          elif echo "$FORECAST" | grep -q '"chanceofrain":"[5-9][0-9]"'; then
-            MESSAGE="🌦 Rain is possible in Tilehurst today."
+            MESSAGE="☔ It is likely to rain in Tilehurst today.
+            🌡 High: ${MAXTEMP}°C
+            🌡 Low: ${MINTEMP}°C" then
+            MESSAGE="🌦 Rain is possible in Tilehurst today.
+            🌡 High: ${MAXTEMP}°C
+            🌡 Low: ${MINTEMP}°C"
           else
-            MESSAGE="☀️ It is unlikely to rain in Tilehurst today."
+            MESSAGE="☀️ It is unlikely to rain in Tilehurst today.
+            🌡 High: ${MAXTEMP}°C
+            🌡 Low: ${MINTEMP}°C"
           fi
 
           echo "MESSAGE=$MESSAGE" >> $GITHUB_ENV
